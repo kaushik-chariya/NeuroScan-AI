@@ -14,7 +14,7 @@ STEP 1 — GitHub Pe Repo Banao
 3. Name: brain-tumor-detection
 4. Public rakho
 5. README add karo
-6. .gitignore — Python select karo
+6. .gitignore — Python select karo 
 7. Create Repository karo
 
 STEP 2 — VS Code Me Clone Karo
@@ -131,6 +131,8 @@ STEP 7 — GitHub Pe Push Karo
 git add .
 git commit -m "Initial project structure"
 git push origin main
+
+
 
 ================================================================
 PHASE 2 — DAGSHUB SETUP

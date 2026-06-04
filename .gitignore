@@ -11,3 +11,5 @@ logs/
 *.egg-info/
 dist/
 build/
+
+crd.txt/

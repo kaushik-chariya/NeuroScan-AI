@@ -1,0 +1,12 @@
+
+https://dagshub.com/kaushik-chariya/NeuroScan-AI.mlflow
+
+import dagshub
+dagshub.init(repo_owner='kaushik-chariya', repo_name='NeuroScan-AI', mlflow=True)
+
+import mlflow
+with mlflow.start_run():
+  mlflow.log_param('parameter name', 'value')
+  mlflow.log_metric('metric name', 1)
+
+  
