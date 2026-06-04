@@ -1,0 +1,798 @@
+================================================================
+    BRAIN TUMOR DETECTION SYSTEM - END TO END GUIDE
+    VS Code + Kaggle + GitHub + DVC + MLflow + Docker + AWS
+================================================================
+
+================================================================
+PHASE 1 — GITHUB + VS CODE SETUP
+================================================================
+
+STEP 1 — GitHub Pe Repo Banao
+------------------------------
+1. GitHub.com pe jao
+2. New Repository banao
+3. Name: brain-tumor-detection
+4. Public rakho
+5. README add karo
+6. .gitignore — Python select karo
+7. Create Repository karo
+
+STEP 2 — VS Code Me Clone Karo
+--------------------------------
+Command:
+git clone https://github.com/tera-username/brain-tumor-detection.git
+cd brain-tumor-detection
+
+STEP 3 — Python Virtual Environment Banao
+------------------------------------------
+Command:
+python -m venv venv
+
+Activate karo (Windows):
+venv\Scripts\activate
+
+Activate karo (Mac/Linux):
+source venv/bin/activate
+
+STEP 4 — Pura Folder Structure Banao
+--------------------------------------
+Command:
+mkdir -p src/components src/pipeline src/entity src/constants src/utils
+mkdir -p config artifacts/data artifacts/models logs
+mkdir -p notebooks app/templates app/static/css app/static/js
+mkdir -p .github/workflows tests
+
+STEP 5 — Sari Empty Files Banao
+---------------------------------
+Command (Windows):
+type nul > src/__init__.py
+type nul > src/components/__init__.py
+type nul > src/pipeline/__init__.py
+type nul > src/entity/__init__.py
+type nul > src/constants/__init__.py
+type nul > src/utils/__init__.py
+type nul > src/components/data_ingestion.py
+type nul > src/components/data_validation.py
+type nul > src/components/data_transformation.py
+type nul > src/components/cnn_trainer.py
+type nul > src/components/yolo_trainer.py
+type nul > src/components/unet_trainer.py
+type nul > src/pipeline/training_pipeline.py
+type nul > src/pipeline/prediction_pipeline.py
+type nul > src/entity/config_entity.py
+type nul > src/utils/utils.py
+type nul > logger.py
+type nul > exception.py
+type nul > app.py
+type nul > config/config.yaml
+type nul > params.yaml
+type nul > dvc.yaml
+type nul > requirements.txt
+type nul > Dockerfile
+type nul > docker-compose.yml
+type nul > .github/workflows/ci_cd.yml
+type nul > setup.py
+
+Command (Mac/Linux):
+touch src/__init__.py
+touch src/components/__init__.py
+touch src/pipeline/__init__.py
+touch src/entity/__init__.py
+touch src/constants/__init__.py
+touch src/utils/__init__.py
+touch src/components/data_ingestion.py
+touch src/components/data_validation.py
+touch src/components/data_transformation.py
+touch src/components/cnn_trainer.py
+touch src/components/yolo_trainer.py
+touch src/components/unet_trainer.py
+touch src/pipeline/training_pipeline.py
+touch src/pipeline/prediction_pipeline.py
+touch src/entity/config_entity.py
+touch src/utils/utils.py
+touch logger.py
+touch exception.py
+touch app.py
+touch config/config.yaml
+touch params.yaml
+touch dvc.yaml
+touch requirements.txt
+touch Dockerfile
+touch docker-compose.yml
+touch .github/workflows/ci_cd.yml
+touch setup.py
+
+STEP 6 — Requirements Install Karo
+------------------------------------
+requirements.txt me yeh likho:
+tensorflow
+torch
+ultralytics
+flask
+numpy
+pandas
+matplotlib
+nibabel
+scikit-learn
+opencv-python
+mlflow
+dagshub
+dvc
+dvc[gdrive]
+pillow
+pyyaml
+tqdm
+
+Install karo:
+pip install -r requirements.txt
+
+STEP 7 — GitHub Pe Push Karo
+------------------------------
+git add .
+git commit -m "Initial project structure"
+git push origin main
+
+================================================================
+PHASE 2 — DAGSHUB SETUP
+================================================================
+
+STEP 1 — Dagshub Pe Account Banao
+-----------------------------------
+1. dagshub.com pe jao
+2. Sign up karo GitHub se
+3. New Repository banao
+4. GitHub repo se connect karo
+   - "Connect a GitHub repo" option select karo
+   - brain-tumor-detection select karo
+
+STEP 2 — MLflow Tracking URI Copy Karo
+----------------------------------------
+Dagshub repo me jao
+Remote tab pe click karo
+MLflow tracking URI copy karo
+Yeh aisa dikhega:
+https://dagshub.com/tera-username/brain-tumor-detection.mlflow
+
+STEP 3 — DVC Dagshub Se Connect Karo
+--------------------------------------
+VS Code terminal me:
+dvc init
+
+dvc remote add origin https://dagshub.com/tera-username/brain-tumor-detection.dvc
+dvc remote modify origin --local auth basic
+dvc remote modify origin --local user tera-dagshub-username
+dvc remote modify origin --local password tera-dagshub-token
+
+git add .dvc
+git commit -m "DVC initialized with Dagshub remote"
+git push origin main
+
+================================================================
+PHASE 3 — VS CODE ME SAARA CODE LIKHO
+================================================================
+
+NOTE: Yahan saara code Claude ya ChatGPT se likhwa lo
+      Upar wala PROMPT use karo jo tune save kiya hai
+
+Files jo likhni hain order me:
+1. logger.py
+2. exception.py
+3. src/constants/__init__.py
+4. src/utils/utils.py
+5. config/config.yaml
+6. params.yaml
+7. src/entity/config_entity.py
+8. src/components/data_ingestion.py
+9. src/components/data_validation.py
+10. src/components/data_transformation.py
+11. src/components/cnn_trainer.py      (sirf architecture)
+12. src/components/yolo_trainer.py     (sirf architecture)
+13. src/components/unet_trainer.py     (sirf architecture)
+14. src/pipeline/training_pipeline.py
+15. src/pipeline/prediction_pipeline.py
+16. app.py
+17. app/templates/index.html
+
+Har file likhne ke baad:
+git add .
+git commit -m "Add filename.py"
+git push origin main
+
+================================================================
+PHASE 4 — KAGGLE SETUP
+================================================================
+
+STEP 1 — Kaggle Pe Account Banao
+----------------------------------
+1. kaggle.com pe jao
+2. Sign up karo
+3. Phone verify karo (GPU ke liye)
+
+STEP 2 — BraTS Dataset Add Karo
+---------------------------------
+1. kaggle.com/datasets pe jao
+2. Search karo "BraTS 2020"
+3. Dataset page pe jao
+4. Note kar lo dataset ka naam
+
+STEP 3 — Teen Notebooks Banao
+-------------------------------
+Kaggle pe:
+1. New Notebook — CNN Training
+2. New Notebook — YOLO Training
+3. New Notebook — U-Net Training
+
+Har notebook me:
+- Accelerator: GPU T4 x2 select karo
+- Persistence: Files select karo
+
+================================================================
+PHASE 5 — KAGGLE PE CNN TRAINING
+================================================================
+
+Kaggle CNN Notebook me yeh steps:
+
+STEP 1 — Dagshub Connect Karo
+-------------------------------
+import dagshub
+import mlflow
+
+dagshub.init(
+    repo_owner='tera-username',
+    repo_name='brain-tumor-detection',
+    mlflow=True
+)
+
+mlflow.set_experiment("CNN-Brain-Tumor")
+
+STEP 2 — GitHub Se Code Clone Karo
+------------------------------------
+!git clone https://github.com/tera-username/brain-tumor-detection.git
+%cd brain-tumor-detection
+!pip install -r requirements.txt
+
+STEP 3 — BraTS Dataset Add Karo
+---------------------------------
+Kaggle notebook me:
+Right side me "Add Data" click karo
+BraTS 2020 dataset add karo
+Path hoga: /kaggle/input/brats20-dataset-training-validation/
+
+STEP 4 — Data Pipeline Chalao
+-------------------------------
+from src.components.data_ingestion import DataIngestion
+from src.components.data_validation import DataValidation
+from src.components.data_transformation import DataTransformation
+
+data_ingestion = DataIngestion()
+data_ingestion.initiate_data_ingestion()
+
+data_validation = DataValidation()
+data_validation.initiate_data_validation()
+
+data_transformation = DataTransformation()
+data_transformation.initiate_data_transformation()
+
+STEP 5 — CNN Train Karo
+-------------------------
+with mlflow.start_run(run_name="CNN_v1"):
+    mlflow.log_params({
+        "epochs": 50,
+        "batch_size": 32,
+        "learning_rate": 0.001,
+        "image_size": 224
+    })
+    
+    from src.components.cnn_trainer import CNNTrainer
+    trainer = CNNTrainer()
+    model, history = trainer.train()
+    
+    mlflow.log_metrics({
+        "accuracy": history['accuracy'][-1],
+        "val_accuracy": history['val_accuracy'][-1],
+        "loss": history['loss'][-1],
+        "val_loss": history['val_loss'][-1]
+    })
+    
+    model.save("cnn_model.h5")
+    mlflow.log_artifact("cnn_model.h5")
+
+STEP 6 — Model Download Karo
+------------------------------
+Kaggle notebook me right side me
+Output tab pe jao
+cnn_model.h5 download karo
+Apne VS Code artifacts/models/ me rakho
+
+================================================================
+PHASE 6 — KAGGLE PE YOLO TRAINING
+================================================================
+
+Kaggle YOLO Notebook me yeh steps:
+
+STEP 1 — Dagshub Connect Karo
+-------------------------------
+(Same as CNN — upar dekho)
+mlflow.set_experiment("YOLO-Brain-Tumor")
+
+STEP 2 — GitHub Clone + Data
+------------------------------
+(Same as CNN)
+
+STEP 3 — YOLO Train Karo
+--------------------------
+with mlflow.start_run(run_name="YOLO_v1"):
+    mlflow.log_params({
+        "epochs": 100,
+        "batch_size": 16,
+        "image_size": 640
+    })
+    
+    from src.components.yolo_trainer import YOLOTrainer
+    trainer = YOLOTrainer()
+    results = trainer.train()
+    
+    mlflow.log_metrics({
+        "mAP50": results.results_dict['metrics/mAP50(B)'],
+        "mAP50-95": results.results_dict['metrics/mAP50-95(B)'],
+        "precision": results.results_dict['metrics/precision(B)'],
+        "recall": results.results_dict['metrics/recall(B)']
+    })
+    
+    mlflow.log_artifact("yolo_model.pt")
+
+STEP 4 — Model Download Karo
+------------------------------
+yolo_model.pt download karo
+VS Code artifacts/models/ me rakho
+
+================================================================
+PHASE 7 — KAGGLE PE U-NET TRAINING
+================================================================
+
+Kaggle U-Net Notebook me yeh steps:
+
+STEP 1 — Dagshub Connect Karo
+-------------------------------
+(Same as CNN)
+mlflow.set_experiment("UNet-Brain-Tumor")
+
+STEP 2 — GitHub Clone + Data
+------------------------------
+(Same as CNN)
+
+STEP 3 — U-Net Train Karo
+---------------------------
+with mlflow.start_run(run_name="UNet_v1"):
+    mlflow.log_params({
+        "epochs": 50,
+        "batch_size": 8,
+        "learning_rate": 0.0001,
+        "image_size": 256
+    })
+    
+    from src.components.unet_trainer import UNetTrainer
+    trainer = UNetTrainer()
+    model, history = trainer.train()
+    
+    mlflow.log_metrics({
+        "iou": history['iou'][-1],
+        "val_iou": history['val_iou'][-1],
+        "dice": history['dice'][-1],
+        "val_dice": history['val_dice'][-1]
+    })
+    
+    model.save("unet_model.h5")
+    mlflow.log_artifact("unet_model.h5")
+
+STEP 4 — Model Download Karo
+------------------------------
+unet_model.h5 download karo
+VS Code artifacts/models/ me rakho
+
+================================================================
+KAGGLE KHATAM — AB SIRF VS CODE
+================================================================
+
+================================================================
+PHASE 8 — DVC SE MODELS PUSH KARO
+================================================================
+
+VS Code terminal me:
+
+STEP 1 — Models DVC Me Add Karo
+---------------------------------
+dvc add artifacts/models/cnn_model.h5
+dvc add artifacts/models/yolo_model.pt
+dvc add artifacts/models/unet_model.h5
+
+STEP 2 — Dagshub Pe Push Karo
+-------------------------------
+dvc push
+
+STEP 3 — GitHub Pe Push Karo
+------------------------------
+git add .
+git commit -m "Add trained models via DVC"
+git push origin main
+
+STEP 4 — Dagshub Pe Check Karo
+--------------------------------
+dagshub.com pe jao
+Tera repo kholo
+Files tab me models dikhenge
+MLflow tab me experiments dikhenge
+
+================================================================
+PHASE 9 — DOCKER SETUP
+================================================================
+
+STEP 1 — Docker Desktop Install Karo
+--------------------------------------
+docker.com/products/docker-desktop pe jao
+Download karo aur install karo
+Restart karo laptop
+
+STEP 2 — Dockerfile Likho
+---------------------------
+Dockerfile me yeh content:
+
+FROM python:3.10-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 5000
+ENV FLASK_APP=app.py
+CMD ["python", "app.py"]
+
+STEP 3 — .dockerignore Banao
+------------------------------
+File banao .dockerignore:
+venv/
+__pycache__/
+*.pyc
+.git/
+notebooks/
+*.ipynb
+artifacts/models/
+
+NOTE: Models Docker me nahi honge
+      DVC se pull honge deployment pe
+
+STEP 4 — Docker Image Build Karo (Test Ke Liye)
+-------------------------------------------------
+docker build -t brain-tumor-app .
+
+STEP 5 — Locally Test Karo
+----------------------------
+docker run -p 5000:5000 brain-tumor-app
+
+Browser me jao: http://localhost:5000
+App chal rahi hai? — 
+
+================================================================
+PHASE 10 — AWS SETUP
+================================================================
+
+STEP 1 — AWS Account Banao
+----------------------------
+aws.amazon.com pe jao
+Account banao
+Credit card dalo (Free tier me charge nahi hoga)
+
+STEP 2 — AWS ECR (Docker Registry) Banao
+------------------------------------------
+1. AWS Console me jao
+2. ECR search karo
+3. Create Repository karo
+4. Name: brain-tumor-app
+5. Private rakho
+6. Repository URI copy karo
+   Aisa dikhega:
+   123456789.dkr.ecr.us-east-1.amazonaws.com/brain-tumor-app
+
+STEP 3 — AWS EC2 Instance Banao
+---------------------------------
+1. AWS Console me EC2 search karo
+2. Launch Instance karo
+3. Settings:
+   - Name: brain-tumor-server
+   - AMI: Ubuntu 22.04 LTS
+   - Instance type: t2.micro (FREE TIER)
+   - Key pair: New key pair banao
+     - Name: brain-tumor-key
+     - Download karo .pem file
+     - SAMBHAL KE RAKHO — DOBARA NAHI MILEGI
+   - Security group:
+     - SSH port 22 open karo
+     - Custom TCP port 5000 open karo
+     - Source: Anywhere (0.0.0.0/0)
+4. Launch karo
+
+STEP 4 — EC2 Pe Docker Install Karo
+--------------------------------------
+EC2 connect karo:
+ssh -i brain-tumor-key.pem ubuntu@tera-ec2-public-ip
+
+EC2 me yeh commands:
+sudo apt update
+sudo apt install -y docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker ubuntu
+exit
+
+Dobara connect karo:
+ssh -i brain-tumor-key.pem ubuntu@tera-ec2-public-ip
+
+STEP 5 — AWS CLI Karo
+-----------------------
+AWS Console me:
+1. IAM search karo
+2. Users me jao
+3. New User banao: github-actions-user
+4. Permissions:
+   - AmazonEC2ContainerRegistryFullAccess
+   - AmazonEC2FullAccess
+5. Access Keys banao
+6. Access Key ID copy karo
+7. Secret Access Key copy karo
+   SAMBHAL KE RAKHO
+
+================================================================
+PHASE 11 — GITHUB ACTIONS CI/CD SETUP
+================================================================
+
+STEP 1 — GitHub Secrets Add Karo
+----------------------------------
+GitHub repo me jao
+Settings > Secrets and variables > Actions
+New repository secret:
+
+AWS_ACCESS_KEY_ID = tera access key
+AWS_SECRET_ACCESS_KEY = tera secret key
+AWS_REGION = us-east-1
+AWS_ECR_LOGIN_URI = 123456789.dkr.ecr.us-east-1.amazonaws.com
+ECR_REPOSITORY_NAME = brain-tumor-app
+EC2_HOST = tera-ec2-public-ip
+EC2_USERNAME = ubuntu
+EC2_SSH_KEY = teri .pem file ka pura content
+
+STEP 2 — CI/CD Workflow Likho
+-------------------------------
+.github/workflows/ci_cd.yml me yeh content:
+
+name: Brain Tumor CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run Tests
+      run: python -m pytest tests/ -v
+
+    - name: Configure AWS
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build Docker Image
+      run: |
+        docker build -t ${{ secrets.ECR_REPOSITORY_NAME }} .
+        docker tag ${{ secrets.ECR_REPOSITORY_NAME }}:latest \
+          ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+    - name: Push to ECR
+      run: |
+        docker push \
+          ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+            docker login --username AWS \
+            --password-stdin ${{ secrets.AWS_ECR_LOGIN_URI }}
+          docker pull ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+          docker stop brain-tumor-app || true
+          docker rm brain-tumor-app || true
+          docker run -d -p 5000:5000 \
+            --name brain-tumor-app \
+            ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+STEP 3 — Push Karo — Automatic Deploy Hoga
+--------------------------------------------
+git add .
+git commit -m "Add CI/CD pipeline"
+git push origin main
+
+GitHub Actions tab me dekho — automatic chalegi
+Docker build hogi
+ECR pe jayegi
+EC2 pe deploy hogi
+
+STEP 4 — App Live Check Karo
+------------------------------
+Browser me jao:
+http://tera-ec2-public-ip:5000
+
+APP LIVE HAI ✅
+
+================================================================
+FINAL PROJECT STRUCTURE JO BANI
+================================================================
+
+brain-tumor-detection/
+├── src/
+│   ├── components/
+│   │   ├── data_ingestion.py
+│   │   ├── data_validation.py
+│   │   ├── data_transformation.py
+│   │   ├── cnn_trainer.py
+│   │   ├── yolo_trainer.py
+│   │   └── unet_trainer.py
+│   ├── pipeline/
+│   │   ├── training_pipeline.py
+│   │   └── prediction_pipeline.py
+│   ├── entity/
+│   │   └── config_entity.py
+│   ├── constants/
+│   │   └── __init__.py
+│   └── utils/
+│       └── utils.py
+├── config/
+│   └── config.yaml
+├── artifacts/
+│   ├── data/
+│   └── models/
+│       ├── cnn_model.h5       (Kaggle se aaya)
+│       ├── yolo_model.pt      (Kaggle se aaya)
+│       └── unet_model.h5      (Kaggle se aaya)
+├── notebooks/
+│   ├── kaggle_cnn_training.ipynb
+│   ├── kaggle_yolo_training.ipynb
+│   └── kaggle_unet_training.ipynb
+├── app/
+│   ├── templates/
+│   │   └── index.html
+│   └── static/
+├── logs/
+├── tests/
+├── .github/
+│   └── workflows/
+│       └── ci_cd.yml
+├── .dvc/
+├── logger.py
+├── exception.py
+├── app.py
+├── Dockerfile
+├── docker-compose.yml
+├── dvc.yaml
+├── params.yaml
+├── requirements.txt
+└── setup.py
+
+================================================================
+KYA COMMIT KARO — KYA NAHI
+================================================================
+
+COMMIT KARO:
+✅ Saara source code
+✅ config files
+✅ Dockerfile
+✅ requirements.txt
+✅ .github/workflows/
+✅ .dvc/ folder (pointers hain)
+✅ dvc.yaml
+✅ params.yaml
+✅ notebooks/
+
+MAT KARO COMMIT:
+❌ artifacts/models/*.h5 (DVC manage karega)
+❌ artifacts/models/*.pt (DVC manage karega)
+❌ artifacts/data/ (badi files)
+❌ venv/
+❌ __pycache__/
+❌ logs/
+❌ .env files (secrets)
+❌ AWS credentials
+
+.gitignore me yeh add karo:
+venv/
+__pycache__/
+*.pyc
+artifacts/models/
+artifacts/data/
+logs/
+.env
+*.pem
+
+================================================================
+PURA FLOW EK BAAR
+================================================================
+
+1. VS Code me code likha
+        ↓
+2. GitHub pe push kiya
+        ↓
+3. Kaggle — CNN train kiya (MLflow Dagshub pe)
+        ↓
+4. Kaggle — YOLO train kiya (MLflow Dagshub pe)
+        ↓
+5. Kaggle — U-Net train kiya (MLflow Dagshub pe)
+        ↓
+6. Models download kiye — artifacts/models/ me rakhe
+        ↓
+7. DVC se Dagshub pe push kiye
+        ↓
+8. GitHub pe push kiya
+        ↓
+9. GitHub Actions automatic chali —
+   Tests → Docker Build → ECR Push → EC2 Deploy
+        ↓
+10. App AWS EC2 pe live ✅
+        ↓
+11. Dagshub pe experiments check karo ✅
+
+================================================================
+PORTFOLIO ME KYA DIKHEGA
+================================================================
+
+✅ GitHub — Clean professional repo
+✅ Dagshub — MLflow experiments online
+✅ Docker — Containerized app
+✅ AWS — Live deployed app
+✅ DVC — Data + Model versioning
+✅ CI/CD — GitHub Actions pipeline
+✅ 3 AI Models — CNN + YOLO + U-Net
+✅ Medical Dataset — BraTS MRI
+✅ Flask Web App — Live demo
+
+================================================================
+ESTIMATED TIME
+================================================================
+
+Phase 1  — GitHub + VS Code Setup      : 1 din
+Phase 2  — Dagshub Setup               : 2-3 ghante
+Phase 3  — VS Code Code Likhna         : 3-4 din
+Phase 4  — Kaggle Setup                : 1-2 ghante
+Phase 5  — CNN Training Kaggle         : 4-6 ghante
+Phase 6  — YOLO Training Kaggle        : 4-6 ghante
+Phase 7  — U-Net Training Kaggle       : 4-6 ghante
+Phase 8  — DVC Models Push             : 1-2 ghante
+Phase 9  — Docker Setup                : 2-3 ghante
+Phase 10 — AWS Setup                   : 2-3 ghante
+Phase 11 — CI/CD Setup                 : 2-3 ghante
+
+Total Estimated : 2-3 hafte
+
+================================================================
+END OF GUIDE
+================================================================
