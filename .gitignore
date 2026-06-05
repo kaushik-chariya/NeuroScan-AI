@@ -3,7 +3,6 @@ __pycache__/
 *.pyc
 *.pyo
 artifacts/data/
-artifacts/models/
 logs/
 .env
 *.pem
