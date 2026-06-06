@@ -1,0 +1,5 @@
+outs:
+- md5: 2f0556a6bea18c14f06577ae395f64f3
+  size: 545956721
+  hash: md5
+  path: yolo_model.pt
