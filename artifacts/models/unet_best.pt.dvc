@@ -1,0 +1,5 @@
+outs:
+- md5: 3d6cae3b9348e59d8727bd714bcb7f23
+  size: 104526027
+  hash: md5
+  path: unet_best.pt
