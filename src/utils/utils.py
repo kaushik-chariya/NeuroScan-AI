@@ -76,17 +76,69 @@ def save_model(model: Any, path: Path) -> None:
         logger.info(f"💾 Model saved: {path}")
     except Exception as e:
         raise NeuroScanException(e, sys)
-
-
 def load_model_keras(path: Path) -> Any:
-    """Loads a Keras/TF model."""
     try:
-        from tensorflow import keras
-        model = keras.models.load_model(path)
+        import tensorflow as tf
+        import h5py
+
+        # Step 1: Architecture manually banao (same as Kaggle notebook)
+        def build_cnn_model(input_shape=(128, 128, 3)):
+            inputs = tf.keras.layers.Input(shape=input_shape)
+
+            x = tf.keras.layers.Conv2D(32, (3,3), padding='same')(inputs)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation('relu')(x)
+            x = tf.keras.layers.Conv2D(32, (3,3), padding='same')(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation('relu')(x)
+            x = tf.keras.layers.MaxPooling2D((2,2))(x)
+            x = tf.keras.layers.Dropout(0.25)(x)
+
+            x = tf.keras.layers.Conv2D(64, (3,3), padding='same')(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation('relu')(x)
+            x = tf.keras.layers.Conv2D(64, (3,3), padding='same')(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation('relu')(x)
+            x = tf.keras.layers.MaxPooling2D((2,2))(x)
+            x = tf.keras.layers.Dropout(0.25)(x)
+
+            x = tf.keras.layers.Conv2D(128, (3,3), padding='same')(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation('relu')(x)
+            x = tf.keras.layers.Conv2D(128, (3,3), padding='same')(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation('relu')(x)
+            x = tf.keras.layers.MaxPooling2D((2,2))(x)
+            x = tf.keras.layers.Dropout(0.30)(x)
+
+            x = tf.keras.layers.Conv2D(256, (3,3), padding='same')(x)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Activation('relu')(x)
+            x = tf.keras.layers.MaxPooling2D((2,2))(x)
+            x = tf.keras.layers.Dropout(0.40)(x)
+
+            x = tf.keras.layers.GlobalAveragePooling2D()(x)
+            x = tf.keras.layers.Dense(256, activation='relu')(x)
+            x = tf.keras.layers.Dropout(0.50)(x)
+            x = tf.keras.layers.Dense(128, activation='relu')(x)
+            x = tf.keras.layers.Dropout(0.30)(x)
+            outputs = tf.keras.layers.Dense(1, activation='sigmoid')(x)
+
+            return tf.keras.Model(inputs, outputs)
+
+        # Step 2: Model banao
+        model = build_cnn_model()
+
+        # Step 3: Weights load karo
+        model.load_weights(str(path))
+
         logger.info(f"✅ Keras model loaded: {path}")
         return model
+
     except Exception as e:
         raise NeuroScanException(e, sys)
+        
 
 
 def load_model_torch(path: Path) -> Any:

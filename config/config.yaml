@@ -1,5 +1,4 @@
 # config/config.yaml
-
 # ── Data Ingestion ────────────────────────────────────
 data_ingestion:
   root_dir: artifacts/data
@@ -13,7 +12,6 @@ data_ingestion:
     - flair
   seg_file_suffix: "_seg.nii.gz"
 
-
 # ── Data Validation ───────────────────────────────────
 data_validation:
   root_dir: artifacts/data/raw
@@ -23,8 +21,7 @@ data_validation:
     - t1ce
     - t2
     - flair
-  required_files_per_case: 5   # 4 modalities + 1 seg
-
+  required_files_per_case: 5
 
 # ── Data Transformation ───────────────────────────────
 data_transformation:
@@ -36,9 +33,8 @@ data_transformation:
   test_ratio: 0.15
   random_seed: 42
   normalize: true
-  slice_axis: 2        # 0: sagittal | 1: coronal | 2: axial
-  slice_index: null    # null = middle slice
-
+  slice_axis: 2
+  slice_index: null
 
 # ── CNN Trainer ───────────────────────────────────────
 cnn_trainer:
@@ -46,52 +42,48 @@ cnn_trainer:
   model_name: cnn_model.h5
   model_path: artifacts/models/cnn_model.h5
   image_size: [128, 128]
-  num_classes: 4
-  epochs: 50
-  batch_size: 32
-  learning_rate: 0.001
+  num_classes: 1                  # binary: tumor / no tumor
+  epochs: 30
+  batch_size: 16
+  learning_rate: 0.0001
   dropout_rate: 0.3
   optimizer: adam
-  loss: categorical_crossentropy
+  loss: binary_crossentropy       # binary model
   metrics:
     - accuracy
-
 
 # ── UNet Trainer ──────────────────────────────────────
 unet_trainer:
   root_dir: artifacts/models
-  model_name: unet_model.h5
-  model_path: artifacts/models/unet_model.h5
+  model_name: unet_model.pt
+  model_path: artifacts/models/unet_model.pt
   image_size: [128, 128]
-  num_classes: 4
+  num_classes: 4                  # 0:bg, 1:necrotic, 2:edema, 3:enhancing
   epochs: 50
-  batch_size: 8
+  batch_size: 16
   learning_rate: 0.0001
   optimizer: adam
-  loss: categorical_crossentropy
+  loss: binary_crossentropy
   metrics:
     - accuracy
-
 
 # ── YOLO Trainer ──────────────────────────────────────
 yolo_trainer:
   root_dir: artifacts/models
   model_name: yolo_model.pt
   model_path: artifacts/models/yolo_model.pt
-  pretrained_weights: yolov8n.pt
+  pretrained_weights: yolov8x.pt  # yolov8n → yolov8x (Kaggle pe x train hua)
   image_size: 640
   epochs: 100
-  batch_size: 16
+  batch_size: 8
   learning_rate: 0.01
-  confidence_threshold: 0.5
-  iou_threshold: 0.45
-  num_classes: 4
+  confidence_threshold: 0.25      # 0.5 → 0.25 (detect karega ab)
+  iou_threshold: 0.40             # 0.45 → 0.40
+  num_classes: 3                  # necrotic, edema, enhancing
   class_names:
-    - Background
     - Necrotic Tumor Core
     - Peritumoral Edema
     - Enhancing Tumor
-
 
 # ── MLflow ────────────────────────────────────────────
 mlflow:
@@ -99,11 +91,10 @@ mlflow:
   run_name: brain_tumor_detection
   tracking_uri: https://dagshub.com/tera-username/NeuroScan-AI.mlflow
 
-
 # ── Flask App ─────────────────────────────────────────
 app:
   host: 0.0.0.0
-  port: 5000
+  port: 8000
   debug: false
   upload_folder: artifacts/uploads
   allowed_extensions:

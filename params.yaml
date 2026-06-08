@@ -1,5 +1,4 @@
 # params.yaml
-
 # ── Data Transformation ───────────────────────────────
 transformation:
   image_size: 128
@@ -10,26 +9,24 @@ transformation:
   val_ratio: 0.15
   test_ratio: 0.15
 
-
 # ── CNN Params ────────────────────────────────────────
 cnn:
-  epochs: 50
-  batch_size: 32
-  learning_rate: 0.001
+  epochs: 30
+  batch_size: 16
+  learning_rate: 0.0001
   dropout_rate: 0.3
   optimizer: adam
-  loss: categorical_crossentropy
-  num_classes: 4
+  loss: binary_crossentropy
+  num_classes: 1
   image_size: 128
-
 
 # ── UNet Params ───────────────────────────────────────
 unet:
   epochs: 50
-  batch_size: 8
+  batch_size: 16
   learning_rate: 0.0001
   optimizer: adam
-  loss: categorical_crossentropy
+  loss: binary_crossentropy
   num_classes: 4
   image_size: 128
   filters:
@@ -38,25 +35,22 @@ unet:
     - 256
     - 512
 
-
 # ── YOLO Params ───────────────────────────────────────
 yolo:
   epochs: 100
-  batch_size: 16
+  batch_size: 8
   learning_rate: 0.01
   image_size: 640
-  confidence_threshold: 0.5
-  iou_threshold: 0.45
-  num_classes: 4
-  pretrained_weights: yolov8n.pt
-
+  confidence_threshold: 0.25
+  iou_threshold: 0.40
+  num_classes: 3
+  pretrained_weights: yolov8x.pt
 
 # ── Early Stopping ────────────────────────────────────
 early_stopping:
   monitor: val_loss
   patience: 10
   restore_best_weights: true
-
 
 # ── MLflow ────────────────────────────────────────────
 mlflow:

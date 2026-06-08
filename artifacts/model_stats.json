@@ -1,0 +1,23 @@
+{
+  "cnn": {
+    "correct": 30,
+    "total": 31,
+    "accuracy": 96.8
+  },
+  "yolo": {
+    "detections": 28,
+    "avg_confidence": 68.3,
+    "total": 16
+  },
+  "unet": {
+    "segmented": 16,
+    "avg_dice": 0.7982,
+    "avg_tumor_area": 14.31,
+    "total": 16
+  },
+  "overall": {
+    "total_scans": 31,
+    "tumors_detected": 16,
+    "accuracy": 96.8
+  }
+}
