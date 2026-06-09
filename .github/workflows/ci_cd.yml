@@ -54,5 +54,6 @@ jobs:
           docker rm neuroscan || true
           docker run -d \
             --name neuroscan \
+            --restart always \
             -p 8000:8000 \
             512809230685.dkr.ecr.us-east-1.amazonaws.com/neuroscanai:latest
