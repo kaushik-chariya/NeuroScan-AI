@@ -2,6 +2,8 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
+# Force rebuild - v2
+
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
@@ -26,4 +28,5 @@ COPY . .
 RUN mkdir -p artifacts/uploads artifacts/demo artifacts/reports artifacts/models logs
 
 EXPOSE 8000
+
 CMD ["python", "app.py"]
