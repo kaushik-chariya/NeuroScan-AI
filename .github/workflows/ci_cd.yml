@@ -2,7 +2,7 @@ name: Deploy NeuroScan AI to AWS
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   deploy:
