@@ -1,22 +1,8 @@
-# Ignore compiled Python files
+artifacts/data/
+artifacts/uploads/
+notebooks/
+logs/
+*.log
 __pycache__/
 *.pyc
-*.pyo
-
-# Ignore version control and DVC metadata
 .git/
-.dvc/
-*.dvc
-
-# Ignore logs and notebooks — not needed inside the image
-logs/
-notebooks/
-
-# Ignore test files
-tests/
-
-# Ignore documentation
-*.md
-
-# Ignore environment variables file
-.env
