@@ -1,8 +1,8 @@
 {
   "cnn": {
     "correct": 0,
-    "total": 41,
-    "accuracy": 89.6
+    "total": 42,
+    "accuracy": 88.9
   },
   "yolo": {
     "detections": 47,
@@ -16,8 +16,8 @@
     "total": 26
   },
   "overall": {
-    "total_scans": 41,
+    "total_scans": 42,
     "tumors_detected": 26,
-    "accuracy": 89.6
+    "accuracy": 88.9
   }
 }
