@@ -210,8 +210,14 @@ def _update_model_stats(report: dict) -> None:
 
     # ── Overall accuracy ────────────────────────────────
     # t = stats["overall"]["total_scans"]
+    # ── Overall accuracy ────────────────────────────────
+    cnn_acc = stats["cnn"].get("accuracy", 0.0)
+    yolo_acc = stats["yolo"].get("avg_confidence", 0.0)
+    unet_acc = stats["unet"].get("avg_dice", 0.0) * 100  # dice score -> %
+
     stats["overall"]["accuracy"] = round(
-        stats["cnn"].get("accuracy", 0.0), 1)
+        (cnn_acc + yolo_acc + unet_acc) / 3, 1)
+
     _save_json(MODEL_STATS_FILE, stats)
 
 
