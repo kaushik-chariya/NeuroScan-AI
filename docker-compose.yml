@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  neuroscan:
+    build: .
+    container_name: neuroscan-ai
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./logs:/app/logs
+      - ./app.py:/app/app.py
+      - ./src:/app/src

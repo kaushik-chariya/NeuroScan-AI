@@ -245,6 +245,7 @@ tensorflow==2.15.0
 tensorflow-estimator==2.15.0
 tensorflow-io-gcs-filesystem==0.37.1
 tensorflow-macos==2.15.0
+pydicom==2.4.4
 termcolor==3.3.0
 terminado==0.18.1
 thop==0.1.1.post2209072238
@@ -265,7 +266,7 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 tzdata==2026.2
 tzlocal==5.3.1
-ultralytics==8.1.0
+ultralytics>=8.3.0
 uri-template==1.3.0
 urllib3==2.0.7
 vine==5.1.0
@@ -281,3 +282,5 @@ yarl==1.24.2
 zc.lockfile==4.0
 zipp==4.1.0
 opencv-python==4.9.0.80
+reportlab
+segmentation-models-pytorch

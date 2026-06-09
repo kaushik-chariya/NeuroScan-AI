@@ -297,8 +297,8 @@ class PredictionPipeline:
             tumor_pixels = int(np.sum(binary_mask))
             total_pixels = int(binary_mask.size)
             tumor_pct    = round((tumor_pixels / total_pixels) * 100, 2)
-            dice_score = round(tumor_pct, 2)      
-
+            # dice_score = round(tumor_pct, 2)      
+            dice_score = round(min(tumor_pct / 100.0, 1.0), 4)
             unet_result = {
                 "mask":              binary_mask,
                 "class_map":         class_map,

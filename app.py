@@ -11,6 +11,7 @@ from datetime import datetime
 from io import BytesIO
 
 import cv2
+import pydicom
 from flask import Flask, request, jsonify, render_template, send_file, abort
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -30,7 +31,7 @@ app.config['DEMO_FOLDER']        = 'artifacts/demo'
 app.config['REPORTS_FOLDER']     = 'artifacts/reports'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
-ALLOWED_EXTENSIONS  = {'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS  = {'png', 'jpg', 'jpeg', 'dcm'}
 HISTORY_FILE        = 'artifacts/history.json'
 PATIENTS_FILE       = 'artifacts/patients.json'
 MODEL_STATS_FILE    = 'artifacts/model_stats.json'
@@ -65,6 +66,28 @@ def _save_json(filepath: str, data: any) -> None:
 def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+def load_dicom_image(filepath: str) -> np.ndarray:
+    """Convert DICOM file to BGR numpy array for OpenCV compatibility."""
+    ds = pydicom.dcmread(filepath, force=True)
+
+    # Fix missing file meta fields
+    if not hasattr(ds.file_meta, 'TransferSyntaxUID'):
+        ds.file_meta.TransferSyntaxUID = pydicom.uid.ImplicitVRLittleEndian
+
+    # Fix missing required pixel fields
+    if not hasattr(ds, 'PhotometricInterpretation'):
+        ds.PhotometricInterpretation = "MONOCHROME2"
+    if not hasattr(ds, 'PixelRepresentation'):
+        ds.PixelRepresentation = 0
+
+    pixel_array = ds.pixel_array.astype(np.float32)
+    # Normalize pixel values to 0-255 range
+    pixel_array = ((pixel_array - pixel_array.min()) /
+                   (pixel_array.max() - pixel_array.min()) * 255)
+    img = pixel_array.astype(np.uint8)
+    # Convert grayscale to BGR so rest of pipeline works normally
+    return cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
 def encode_image_to_base64(img_array: np.ndarray) -> str:
     _, buffer = cv2.imencode('.png', img_array)
@@ -131,9 +154,10 @@ def _update_model_stats(report: dict) -> None:
     # ── CNN accuracy: use confidence as proxy ──────────
     conf = report["classification"]["confidence"]
     stats["cnn"]["total"] += 1
-    stats["cnn"]["correct"] += 1 if conf >= 0.50 else 0
+    old_avg = stats["cnn"].get("accuracy", 0.0)
+    n = stats["cnn"]["total"]
     stats["cnn"]["accuracy"] = round(
-        stats["cnn"]["correct"] / stats["cnn"]["total"] * 100, 1
+        (old_avg * (n - 1) + conf * 100) / n, 1
     )
 
     # ── YOLO stats (only when tumor detected) ──────────
@@ -164,7 +188,7 @@ def _update_model_stats(report: dict) -> None:
 
         raw_dice = seg.get("dice_score", 0.0)
         if raw_dice > 1.0:
-            aw_dice = round(raw_dice / 100.0, 4)
+            raw_dice = round(raw_dice / 100.0, 4)
         else:
             raw_dice = round(float(raw_dice), 4)
 
@@ -223,18 +247,14 @@ def _save_patient(patient: dict) -> None:
 
 def _get_unet_mask_from_pipeline() -> np.ndarray | None:
     """
-    FIX 1 — Robust U-Net cache access.
-
-    Instead of blindly doing getattr(pipeline, '_unet_result_cache', None),
-    we check multiple possible attribute names the pipeline might use and
-    validate the result is actually a non-empty numpy array before using it.
+    Robust U-Net cache access.
+    Checks multiple possible attribute names the pipeline might use and
+    validates the result is actually a non-empty numpy array before using it.
     Returns the mask array, or None if not available.
     """
-    # Try common attribute names the pipeline might store the mask under
     for attr in ('_unet_result_cache', '_unet_mask', 'unet_mask', '_last_unet_mask'):
         mask = getattr(pipeline, attr, None)
         if mask is not None:
-            # Validate it's a real numpy array with content
             if isinstance(mask, np.ndarray) and mask.size > 0:
                 return mask
     return None
@@ -267,7 +287,6 @@ def _build_visuals(image: np.ndarray, report: dict) -> tuple:
             yolo_b64 = encode_image_to_base64(draw_yolo_boxes(image, yolo_boxes))
 
         # ── U-Net segmentation mask overlay ───────────
-        # FIX 1: use robust helper instead of bare getattr
         if report.get("segmentation"):
             unet_mask = _get_unet_mask_from_pipeline()
             if unet_mask is not None:
@@ -302,7 +321,7 @@ def generate_pdf_report(scan_data: dict) -> BytesIO:
                                  spaceAfter=16, alignment=TA_CENTER)
 
     story.append(Paragraph("🧠 NeuroScan AI — Diagnostic Report", title_style))
-    story.append(Paragraph("AI-Powered Brain Tumor Detection System", sub_style))
+    story.append(Paragraph("🤖 AI-Powered Brain Tumor Detection System", sub_style))
     story.append(HRFlowable(width="100%", thickness=1,
                             color=colors.HexColor('#7C3AED'), spaceAfter=16))
 
@@ -405,6 +424,47 @@ def generate_pdf_report(scan_data: dict) -> BytesIO:
         story.append(seg_table)
         story.append(Spacer(1, 16))
 
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # CHANGE 1: MRI Scan Images section (Original, YOLO, U-Net)
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    images = scan_data.get("images", {})
+    original_b64 = images.get("original")
+    yolo_b64     = images.get("yolo")
+    unet_b64     = images.get("unet")
+
+    if original_b64 or yolo_b64 or unet_b64:
+        story.append(Paragraph("MRI Scan Images",
+                                ParagraphStyle('H2', parent=styles['Heading2'],
+                                               textColor=colors.HexColor('#7C3AED'))))
+        story.append(Spacer(1, 8))
+        img_cells, img_labels = [], []
+        for b64, label in [
+            (original_b64, "Original MRI"),
+            (yolo_b64,     "YOLO Detection"),
+            (unet_b64,     "U-Net Segmentation")
+        ]:
+            if b64:
+                img_io = BytesIO(base64.b64decode(b64))
+                img_cells.append(RLImage(img_io, width=1.8*inch, height=1.8*inch))
+                img_labels.append(Paragraph(label, ParagraphStyle('IL',
+                    parent=styles['Normal'], fontSize=8,
+                    textColor=colors.HexColor('#7C3AED'), alignment=TA_CENTER)))
+        while len(img_cells) < 3:
+            img_cells.append('')
+            img_labels.append('')
+        img_table = Table([img_cells, img_labels],
+                          colWidths=[2.0*inch, 2.0*inch, 2.0*inch])
+        img_table.setStyle(TableStyle([
+            ('ALIGN',      (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN',     (0, 0), (-1, -1), 'MIDDLE'),
+            ('PADDING',    (0, 0), (-1, -1), 6),
+            ('GRID',       (0, 0), (-1, -1), 0.5, colors.HexColor('#E0E0E0')),
+            ('BACKGROUND', (0, 0), (-1,  0), colors.HexColor('#F5F3FF')),
+        ]))
+        story.append(img_table)
+        story.append(Spacer(1, 16))
+    # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
     story.append(HRFlowable(width="100%", thickness=0.5,
                             color=colors.grey, spaceBefore=8, spaceAfter=8))
     disclaimer_style = ParagraphStyle('Disc', parent=styles['Normal'],
@@ -418,6 +478,26 @@ def generate_pdf_report(scan_data: dict) -> BytesIO:
     story.append(Paragraph(
         f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | NeuroScan AI v1.0",
         disclaimer_style
+    ))
+
+    story.append(Spacer(1, 8))
+    story.append(HRFlowable(width="100%", thickness=0.5,
+                        color=colors.HexColor('#7C3AED'), spaceAfter=6))
+
+    author_style = ParagraphStyle('Author', parent=styles['Normal'],
+                               fontSize=9, textColor=colors.HexColor('#7C3AED'),
+                               alignment=TA_CENTER, fontName='Helvetica-Bold')
+
+    story.append(Paragraph("👨🏻‍🎓 Developed by Kaushik Chariya 👨🏻‍🎓", author_style))
+
+    contact_style = ParagraphStyle('Contact', parent=styles['Normal'],
+                                fontSize=8, textColor=colors.grey,
+                                alignment=TA_CENTER)
+
+    story.append(Paragraph(
+        'chariyajkaushik1435@gmail.com  |  '
+        '<link href="https://kaushik-chariya.netlify.app">kaushik-chariya.netlify.app</link>',
+        contact_style
     ))
 
     doc.build(story)
@@ -438,9 +518,8 @@ def index():
 @app.route('/predict', methods=['POST'])
 def predict():
     """
-    FIX 2 — Proper JSON error responses instead of raising NeuroScanException
-    which caused Flask to crash with a 500 and no JSON body.
-    All exceptions are now caught and returned as { "error": "..." } JSON.
+    Accepts PNG, JPG, JPEG, and DCM (DICOM) files for tumor detection.
+    All exceptions are caught and returned as { "error": "..." } JSON.
     """
     try:
         if 'file' not in request.files:
@@ -450,7 +529,7 @@ def predict():
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
         if not allowed_file(file.filename):
-            return jsonify({"error": "Invalid file type. Use PNG, JPG, JPEG"}), 400
+            return jsonify({"error": "Invalid file type. Use PNG, JPG, JPEG, DCM"}), 400
 
         patient_id   = request.form.get('patient_id', '').strip() or f"PT-{uuid.uuid4().hex[:6].upper()}"
         patient_name = request.form.get('patient_name', 'Anonymous').strip()
@@ -458,11 +537,23 @@ def predict():
         patient_sex  = request.form.get('patient_sex', 'N/A').strip()
         scan_type    = 'manual'
 
-        filename = f"{uuid.uuid4().hex}.png"
+        # Preserve original extension for DICOM detection
+        original_ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"{uuid.uuid4().hex}.{original_ext}"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        image = cv2.imread(filepath)
+        # Load image — DICOM handled separately
+        if original_ext == 'dcm':
+            image = load_dicom_image(filepath)
+            # YOLO DCM accept nahi karta — PNG mein convert karke save karo
+            png_filepath = filepath.replace('.dcm', '.png')
+            cv2.imwrite(png_filepath, image)
+            yolo_path = png_filepath
+        else:
+            image = cv2.imread(filepath)
+            yolo_path = filepath
+
         if image is None:
             os.remove(filepath)
             return jsonify({"error": "Could not read image — file may be corrupt"}), 400
@@ -470,14 +561,16 @@ def predict():
         mri_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
 
         # Run prediction pipeline
-        report = pipeline.run(mri_gray, image_path=filepath)
+        report = pipeline.run(mri_gray, image_path=yolo_path)
 
-        # FIX 1: central visual builder uses robust mask accessor
+        # Build visuals using robust mask accessor
         original_b64, yolo_b64, unet_b64 = _build_visuals(image, report)
 
         # Delete temp file AFTER pipeline + visuals
         if os.path.exists(filepath):
             os.remove(filepath)
+        if original_ext == 'dcm' and os.path.exists(png_filepath):
+            os.remove(png_filepath)
 
         scan_entry = {
             "scan_id":        report["scan_id"],
@@ -495,7 +588,7 @@ def predict():
             "segmentation":   report.get("segmentation") if report["classification"]["tumor_detected"] else None,
         }
 
-        # Persist
+        # Persist (history mein sirf original save hoti hai — yolo/unet RAM-only)
         _save_to_history({**scan_entry, "images": {"original": original_b64}})
         _save_patient({
             "patient_id":   patient_id,
@@ -523,7 +616,6 @@ def predict():
         }), 200
 
     except Exception as e:
-        # FIX 2: catch ALL exceptions and return proper JSON — no more Flask crashes
         logger.error(f"[/predict] Prediction failed: {str(e)}", exc_info=True)
         return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
 
@@ -531,10 +623,6 @@ def predict():
 # ── Demo Scan ─────────────────────────────────────────
 @app.route('/demo/<sample_type>', methods=['GET'])
 def demo_scan(sample_type):
-    """
-    FIX 2: All exceptions return proper JSON error responses.
-    FIX 1: U-Net mask accessed via robust _get_unet_mask_from_pipeline().
-    """
     try:
         demo_map = {
             "normal": os.path.join(app.config['DEMO_FOLDER'], 'normal.jpg'),
@@ -560,7 +648,7 @@ def demo_scan(sample_type):
         # Run prediction pipeline
         report = pipeline.run(mri_gray, image_path=demo_path)
 
-        # FIX 1: central visual builder uses robust mask accessor
+        # Build visuals using robust mask accessor
         original_b64, yolo_b64, unet_b64 = _build_visuals(image, report)
 
         scan_entry = {
@@ -596,7 +684,6 @@ def demo_scan(sample_type):
         }), 200
 
     except Exception as e:
-        # FIX 2: proper JSON error — no more Flask crash
         logger.error(f"[/demo/{sample_type}] Demo scan failed: {str(e)}", exc_info=True)
         return jsonify({"error": f"Demo scan failed: {str(e)}"}), 500
 
@@ -669,14 +756,23 @@ def model_performance():
     return jsonify(stats), 200
 
 
-# ── Report (PDF) ──────────────────────────────────────
-@app.route('/report/<scan_id>', methods=['GET'])
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CHANGE 2: /report route — GET + POST dono support karta hai
+# POST body mein images inject karo (yolo + unet) PDF ke liye
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+@app.route('/report/<scan_id>', methods=['GET', 'POST'])
 def download_report(scan_id):
     history   = _load_json(HISTORY_FILE, [])
     scan_data = next((h for h in history if h.get("scan_id") == scan_id), None)
 
     if not scan_data:
         return jsonify({"error": "Scan not found"}), 404
+
+    # POST body mein images inject karo agar available hain
+    if request.method == 'POST':
+        body = request.get_json(silent=True) or {}
+        if body.get("images"):
+            scan_data = {**scan_data, "images": body["images"]}
 
     try:
         pdf_buffer = generate_pdf_report(scan_data)
@@ -689,6 +785,7 @@ def download_report(scan_id):
     except Exception as e:
         logger.error(f"[/report] Report generation failed: {str(e)}", exc_info=True)
         return jsonify({"error": "Report generation failed"}), 500
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
 # ── Reset Model Stats ────────────────────────────────

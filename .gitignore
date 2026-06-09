@@ -12,3 +12,4 @@ dist/
 build/
 
 crd.txt/
+.dvc/config.local
