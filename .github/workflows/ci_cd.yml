@@ -1,13 +1,10 @@
 name: Deploy NeuroScan AI to AWS
-
 on:
   push:
     branches: [ master ]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -49,22 +46,22 @@ jobs:
             # Cleanup old Docker images & containers to free space
             docker system prune -af
             docker volume prune -f
-
             # Login to ECR
             aws ecr get-login-password --region us-east-1 | \
               docker login --username AWS --password-stdin \
               512809230685.dkr.ecr.us-east-1.amazonaws.com
-
             # Pull latest image
             docker pull 512809230685.dkr.ecr.us-east-1.amazonaws.com/neuroscanai:latest
-
+            # Persist model stats before removing old container
+            mkdir -p /home/ubuntu/artifacts
+            docker cp neuroscan:/app/artifacts/model_stats.json /home/ubuntu/artifacts/model_stats.json || true
             # Stop & remove old container
             docker stop neuroscan || true
             docker rm neuroscan || true
-
             # Run new container
             docker run -d \
               --name neuroscan \
               --restart always \
               -p 8000:8000 \
+              -v /home/ubuntu/artifacts/model_stats.json:/app/artifacts/model_stats.json \
               512809230685.dkr.ecr.us-east-1.amazonaws.com/neuroscanai:latest
