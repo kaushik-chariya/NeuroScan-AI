@@ -6,8 +6,6 @@ Werkzeug==3.0.1
 
 # Deep Learning
 tensorflow-cpu==2.15.0
-torch==2.1.2
-torchvision==0.16.2
 ultralytics>=8.3.0
 segmentation-models-pytorch
 keras==2.15.0
