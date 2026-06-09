@@ -447,6 +447,6 @@ NeuroScan-AI/
 
 <br/>
 
-Made with ❤️ by [Kaushik Chariya](https://kaushik-chariya.netlify.app)
+Made with ❤️ by [Kaushik Chariya](https://kaushik-chariya.netlify.app) 🎓
 
 </div>
