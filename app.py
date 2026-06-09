@@ -211,8 +211,7 @@ def _update_model_stats(report: dict) -> None:
     # ── Overall accuracy ────────────────────────────────
     t = stats["overall"]["total_scans"]
     stats["overall"]["accuracy"] = round(
-        (stats["cnn"]["correct"] / t * 100) if t > 0 else 0.0, 1
-    )
+    stats["cnn"].get("accuracy", 0.0), 1)
 
     _save_json(MODEL_STATS_FILE, stats)
 

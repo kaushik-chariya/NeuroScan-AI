@@ -1,23 +1,23 @@
 {
   "cnn": {
     "correct": 0,
-    "total": 39,
-    "accuracy": 90.0
+    "total": 41,
+    "accuracy": 89.6
   },
   "yolo": {
-    "detections": 45,
-    "avg_confidence": 69.1,
-    "total": 25
+    "detections": 47,
+    "avg_confidence": 69.5,
+    "total": 26
   },
   "unet": {
-    "segmented": 25,
-    "avg_dice": 0.8446,
-    "avg_tumor_area": 13.94,
-    "total": 25
+    "segmented": 26,
+    "avg_dice": 0.8466,
+    "avg_tumor_area": 13.45,
+    "total": 26
   },
   "overall": {
-    "total_scans": 39,
-    "tumors_detected": 25,
-    "accuracy": 0.0
+    "total_scans": 41,
+    "tumors_detected": 26,
+    "accuracy": 89.6
   }
 }
