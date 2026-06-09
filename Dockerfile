@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements and replace tensorflow-macos with tensorflow for Linux
 COPY requirements.txt .
-RUN sed -i 's/tensorflow-macos/tensorflow/g' requirements.txt
+RUN sed -i 's/tensorflow-macos/tensorflow-cpu/g' requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
