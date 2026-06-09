@@ -215,7 +215,7 @@ def _update_model_stats(report: dict) -> None:
     _save_json(MODEL_STATS_FILE, stats)
 
 
-# ── History Helpers ───────────────────────────────────
+# ── History Helpers  ───────────────────────────────────
 
 def _save_to_history(entry: dict) -> None:
     history = _load_json(HISTORY_FILE, [])
